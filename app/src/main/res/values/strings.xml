@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">MultiCam</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancel</string>
 </resources>
