@@ -18,6 +18,7 @@ import android.view.Surface
 import android.view.TextureView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import com.dhirajgupta.multicam.service.ManagedCamera
 import com.dhirajgupta.multicam.util.CompareSizesByArea
 import com.dhirajgupta.multicam.view.AutoFitTextureView
 import kotlinx.android.synthetic.main.activity_main.*
@@ -33,8 +34,8 @@ class MainActivity : AppCompatActivity() {
     var cameraId0 = ""
     var cameraId1 = ""
 
-    lateinit var camera0: CameraDevice
-    lateinit var camera1: CameraDevice
+    var camera0:ManagedCamera? = null
+    var camera1:ManagedCamera? = null
 
     val textureListener = object : TextureView.SurfaceTextureListener {
         override fun onSurfaceTextureAvailable(p0: SurfaceTexture?, p1: Int, p2: Int) {
@@ -101,7 +102,6 @@ class MainActivity : AppCompatActivity() {
     val camera0StateCallback = object : CameraDevice.StateCallback() {
         override fun onOpened(camera: CameraDevice) {
             Timber.i("Opened")
-            camera0 = camera
             val surface = Surface(view_finder_0.surfaceTexture)
             camera.createCaptureSession(Arrays.asList(surface),captureSessionCallback, null)
         }
@@ -185,7 +185,6 @@ class MainActivity : AppCompatActivity() {
     val camera1StateCallback = object : CameraDevice.StateCallback() {
         override fun onOpened(camera: CameraDevice) {
             Timber.i("Opened")
-            camera1 = camera
             val surface = Surface(view_finder_1.surfaceTexture)
             camera.createCaptureSession(Arrays.asList(surface),captureSessionCallback1, null)
         }
@@ -220,8 +219,10 @@ class MainActivity : AppCompatActivity() {
         Timber.i("onCreate")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        view_finder_0.surfaceTextureListener = textureListener
-        view_finder_1.surfaceTextureListener = textureListener1
+        initCameras()
+
+//        view_finder_0.surfaceTextureListener = textureListener
+//        view_finder_1.surfaceTextureListener = textureListener1
     }
 
     /**
@@ -233,6 +234,8 @@ class MainActivity : AppCompatActivity() {
     override fun onResumeFragments() {
         super.onResumeFragments()
         Timber.i("onResumeFragments")
+        camera0?.prepareToPreview()
+        camera1?.prepareToPreview()
     }
 
     /**
@@ -242,6 +245,8 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         Timber.i("onPause Activity")
+        camera0?.releaseResources()
+        camera1?.releaseResources()
     }
 
     /**
@@ -324,6 +329,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun initCameras(){
+        val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        Timber.i("Available cameras: %s", Arrays.toString(manager.cameraIdList))
+        if (manager.cameraIdList.size < 1) {
+            AlertDialog.Builder(this@MainActivity)
+                .setMessage(getString(R.string.this_device_has_no_cameras))
+                .setNeutralButton(getString(R.string.ok)) { _, _ ->
+                    finish() //Finish the activity because there are no cameras
+                }
+                .create()
+                .show()
+        }
+        camera0 = ManagedCamera(manager.cameraIdList[0],"Camera${manager.cameraIdList[0]}}")
+        if (manager.cameraIdList.size >= 2) {
+            camera1 = ManagedCamera(manager.cameraIdList[1],"Camera${manager.cameraIdList[1]}}")
+        }
+    }
+
     fun chooseCameraInputs() {
         val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
         Timber.i("Available cameras: %s", Arrays.toString(manager.cameraIdList))
@@ -361,7 +384,7 @@ class MainActivity : AppCompatActivity() {
 
     fun startViewFinder(cameraId: String, cameraStateCallBack: CameraDevice.StateCallback) {
         val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        manager.openCamera(cameraId, cameraStateCallBack, null)
+//        manager.openCamera(cameraId, cameraStateCallBack, null)
     }
 
     fun combinedPreview() {
