@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dhirajgupta.multicam.view
+package com.dhirajgupta.multicam.views
 
 import android.content.Context
 import android.util.AttributeSet

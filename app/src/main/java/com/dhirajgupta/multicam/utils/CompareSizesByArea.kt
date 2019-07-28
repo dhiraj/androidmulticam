@@ -1,4 +1,4 @@
-package com.dhirajgupta.multicam.util
+package com.dhirajgupta.multicam.utils
 
 import android.util.Size
 import java.lang.Long.signum

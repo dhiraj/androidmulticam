@@ -10,4 +10,6 @@
     <string name="save">Save</string>
     <string name="stop">Stop</string>
     <string name="start">Start</string>
+    <string name="camera_description">Cam %1$s: %2$d fps</string>
+    <string name="camera_description_idle">Cam %1$s: off</string>
 </resources>

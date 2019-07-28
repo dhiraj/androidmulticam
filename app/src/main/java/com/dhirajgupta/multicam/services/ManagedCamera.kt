@@ -1,4 +1,4 @@
-package com.dhirajgupta.multicam.service
+package com.dhirajgupta.multicam.services
 
 import android.Manifest
 import android.app.Activity
@@ -9,17 +9,20 @@ import android.hardware.camera2.*
 import android.media.ImageReader
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.SystemClock
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
 import android.view.TextureView
 import androidx.core.content.ContextCompat
-import com.dhirajgupta.multicam.util.CompareSizesByArea
-import com.dhirajgupta.multicam.view.AutoFitTextureView
+import com.dhirajgupta.multicam.interfaces.*
+import com.dhirajgupta.multicam.utils.CompareSizesByArea
+import com.dhirajgupta.multicam.views.AutoFitTextureView
 import timber.log.Timber
 import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
 class ManagedCamera(
     /**
@@ -35,13 +38,28 @@ class ManagedCamera(
     /**
      * An [AutoFitTextureView] for camera preview.
      */
-    val textureView: AutoFitTextureView
+    val textureView: AutoFitTextureView,
+
+    /**
+     * Listener to observe notifications from camera state and FPS changes
+     */
+    val listener: ManagedCameraStatus
 ) {
 
     /**
      * A flag to match the preview playing status of the camera
      */
     var isPreviewing = false
+
+    /**
+     * Capture the last milliseconds to allow fps calculation for this camera view
+     */
+    var lastMillis = SystemClock.elapsedRealtime()
+
+    /**
+     * Capture the last milliseconds to allow fps calculation for this camera view
+     */
+    var lastFPS = 0
 
     /**
      * An additional thread for running tasks that shouldn't block the UI.
@@ -109,7 +127,11 @@ class ManagedCamera(
      *
      * @see .captureCallback
      */
-    private var cameraState = STATE_PREVIEW
+    var cameraState = CAMERASTATE_IDLE
+        set(value) {
+            field = value
+            textureView.post { listener.cameraStateChanged(this@ManagedCamera, value) }
+        }
 
 
     /////////////////////////////////////////////////// Callback Instance Variables ///////////////////////////////////
@@ -128,46 +150,18 @@ class ManagedCamera(
 
         override fun onSurfaceTextureUpdated(p0: SurfaceTexture?) {
 //            Timber.i("onSurfaceTextureUpdated")
+            val currentMillis = SystemClock.elapsedRealtime()
+            val currentFPS = (1000.toFloat() / (currentMillis - lastMillis).toFloat()).roundToInt()
+            if (currentFPS != lastFPS){
+                textureView.post { listener.cameraFPSchanged(this@ManagedCamera, currentFPS) }
+            }
+            lastMillis = currentMillis
+            lastFPS = currentFPS
         }
 
         override fun onSurfaceTextureDestroyed(p0: SurfaceTexture?): Boolean {
             Timber.i("onSurfaceTextureDestroyed")
             return true
-        }
-    }
-
-    val captureSessionCallback = object : CameraCaptureSession.StateCallback() {
-        override fun onReady(session: CameraCaptureSession) {
-            super.onReady(session)
-            Timber.i("OnReady")
-        }
-
-        override fun onCaptureQueueEmpty(session: CameraCaptureSession) {
-            super.onCaptureQueueEmpty(session)
-            Timber.i("onCaptureQueueEmpty")
-        }
-
-        override fun onConfigureFailed(p0: CameraCaptureSession) {
-            Timber.i("onConfigureFailed")
-        }
-
-        override fun onClosed(session: CameraCaptureSession) {
-            super.onClosed(session)
-            Timber.i("onClosed")
-        }
-
-        override fun onSurfacePrepared(session: CameraCaptureSession, surface: Surface) {
-            super.onSurfacePrepared(session, surface)
-            Timber.i("onSurfacePrepared")
-        }
-
-        override fun onConfigured(p0: CameraCaptureSession) {
-            Timber.i("onConfigured")
-        }
-
-        override fun onActive(session: CameraCaptureSession) {
-            super.onActive(session)
-            Timber.i("onActive")
         }
     }
 
@@ -209,22 +203,23 @@ class ManagedCamera(
 
         private fun process(result: CaptureResult) {
             when (cameraState) {
-                STATE_PREVIEW -> Unit // Do nothing when the camera preview is working normally.
-                STATE_WAITING_LOCK -> capturePicture(result)
-                STATE_WAITING_PRECAPTURE -> {
+                CAMERASTATE_PREVIEW -> Unit // Do nothing when the camera preview is working normally.
+                CAMERASTATE_WAITING_LOCK -> capturePicture(result)
+                CAMERASTATE_WAITING_PRECAPTURE -> {
                     // CONTROL_AE_STATE can be null on some devices
                     val aeState = result.get(CaptureResult.CONTROL_AE_STATE)
                     if (aeState == null ||
                         aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE ||
-                        aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
-                        cameraState = STATE_WAITING_NON_PRECAPTURE
+                        aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED
+                    ) {
+                        cameraState = CAMERASTATE_WAITING_NON_PRECAPTURE
                     }
                 }
-                STATE_WAITING_NON_PRECAPTURE -> {
+                CAMERASTATE_WAITING_NON_PRECAPTURE -> {
                     // CONTROL_AE_STATE can be null on some devices
                     val aeState = result.get(CaptureResult.CONTROL_AE_STATE)
                     if (aeState == null || aeState != CaptureResult.CONTROL_AE_STATE_PRECAPTURE) {
-                        cameraState = STATE_PICTURE_TAKEN
+                        cameraState = CAMERASTATE_PICTURE_TAKEN
                         captureStillPicture()
                     }
                 }
@@ -236,11 +231,12 @@ class ManagedCamera(
             if (afState == null) {
                 captureStillPicture()
             } else if (afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED
-                || afState == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED) {
+                || afState == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED
+            ) {
                 // CONTROL_AE_STATE can be null on some devices
                 val aeState = result.get(CaptureResult.CONTROL_AE_STATE)
                 if (aeState == null || aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
-                    cameraState = STATE_PICTURE_TAKEN
+                    cameraState = CAMERASTATE_PICTURE_TAKEN
                     captureStillPicture()
                 } else {
                     runPrecaptureSequence()
@@ -248,15 +244,19 @@ class ManagedCamera(
             }
         }
 
-        override fun onCaptureProgressed(session: CameraCaptureSession,
-                                         request: CaptureRequest,
-                                         partialResult: CaptureResult) {
+        override fun onCaptureProgressed(
+            session: CameraCaptureSession,
+            request: CaptureRequest,
+            partialResult: CaptureResult
+        ) {
             process(partialResult)
         }
 
-        override fun onCaptureCompleted(session: CameraCaptureSession,
-                                        request: CaptureRequest,
-                                        result: TotalCaptureResult) {
+        override fun onCaptureCompleted(
+            session: CameraCaptureSession,
+            request: CaptureRequest,
+            result: TotalCaptureResult
+        ) {
             process(result)
         }
 
@@ -271,17 +271,19 @@ class ManagedCamera(
 
     /////////////////////////////////// Implementation ////////////////////////////////////
 
-    fun updatePreviewStatus(){
-        if (isPreviewing){
+    fun updatePreviewStatus() {
+        if (isPreviewing) {
             captureSession?.setRepeatingRequest(
                 previewRequest,
                 captureCallback, backgroundHandler
             )
-        }
-        else{
+            cameraState = CAMERASTATE_PREVIEW
+        } else {
             captureSession?.stopRepeating()
+            cameraState = CAMERASTATE_IDLE
         }
     }
+
     /**
      * Sets up member variables related to camera.
      *
@@ -468,7 +470,6 @@ class ManagedCamera(
     }
 
 
-
     /**
      * Creates a new [CameraCaptureSession] for camera preview.
      */
@@ -489,7 +490,8 @@ class ManagedCamera(
             previewRequestBuilder.addTarget(surface)
 
             // Here, we create a CameraCaptureSession for camera preview.
-            cameraDevice?.createCaptureSession(Arrays.asList(surface),//, imageReader?.surface),
+            cameraDevice?.createCaptureSession(
+                Arrays.asList(surface),//, imageReader?.surface),
                 object : CameraCaptureSession.StateCallback() {
 
                     override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
@@ -513,7 +515,6 @@ class ManagedCamera(
                         } catch (e: CameraAccessException) {
                             Timber.e(e)
                         }
-
                     }
 
                     override fun onConfigureFailed(session: CameraCaptureSession) {
@@ -573,7 +574,7 @@ class ManagedCamera(
                 CameraMetadata.CONTROL_AF_TRIGGER_START
             )
             // Tell #captureCallback to wait for the lock.
-            cameraState = STATE_WAITING_LOCK
+            cameraState = CAMERASTATE_WAITING_LOCK
             captureSession?.capture(
                 previewRequestBuilder.build(), captureCallback,
                 backgroundHandler
@@ -596,7 +597,7 @@ class ManagedCamera(
                 CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START
             )
             // Tell #captureCallback to wait for the precapture sequence to be set.
-            cameraState = STATE_WAITING_PRECAPTURE
+            cameraState = CAMERASTATE_WAITING_PRECAPTURE
             captureSession?.capture(
                 previewRequestBuilder.build(), captureCallback,
                 backgroundHandler
@@ -679,7 +680,7 @@ class ManagedCamera(
                 backgroundHandler
             )
             // After this, the camera will go back to the normal state of preview.
-            cameraState = STATE_PREVIEW
+            cameraState = CAMERASTATE_PREVIEW
             captureSession?.setRepeatingRequest(
                 previewRequest, captureCallback,
                 backgroundHandler
@@ -715,30 +716,6 @@ class ManagedCamera(
             ORIENTATIONS.append(Surface.ROTATION_270, 180)
         }
 
-        /**
-         * Camera state: Showing camera preview.
-         */
-        private val STATE_PREVIEW = 0
-
-        /**
-         * Camera state: Waiting for the focus to be locked.
-         */
-        private val STATE_WAITING_LOCK = 1
-
-        /**
-         * Camera state: Waiting for the exposure to be precapture state.
-         */
-        private val STATE_WAITING_PRECAPTURE = 2
-
-        /**
-         * Camera state: Waiting for the exposure state to be something other than precapture.
-         */
-        private val STATE_WAITING_NON_PRECAPTURE = 3
-
-        /**
-         * Camera state: Picture was taken.
-         */
-        private val STATE_PICTURE_TAKEN = 4
 
         /**
          * Max preview width that is guaranteed by Camera2 API

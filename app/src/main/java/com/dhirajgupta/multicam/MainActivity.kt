@@ -4,25 +4,18 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.SurfaceTexture
-import android.hardware.camera2.CameraCaptureSession
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
-import android.text.TextUtils
-import android.view.Surface
-import android.view.TextureView
-import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
-import com.dhirajgupta.multicam.service.ManagedCamera
-import com.dhirajgupta.multicam.util.CompareSizesByArea
-import com.dhirajgupta.multicam.view.AutoFitTextureView
+import com.dhirajgupta.multicam.interfaces.CAMERASTATE_IDLE
+import com.dhirajgupta.multicam.interfaces.CAMERASTATE_PREVIEW
+import com.dhirajgupta.multicam.interfaces.ManagedCameraStatus
+import com.dhirajgupta.multicam.services.ManagedCamera
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
 import java.util.*
@@ -83,13 +76,6 @@ class MainActivity : AppCompatActivity() {
         camera?.let {
             it.isPreviewing = !it.isPreviewing
             it.updatePreviewStatus()
-            if (it.isPreviewing) {
-                //Button will now stop
-                view.text = "${getString(R.string.stop)} ${camera.systemId}"
-            } else {
-                //Button will now start
-                view.text = "${getString(R.string.start)} ${camera.systemId}"
-            }
         }
     }
 
@@ -166,6 +152,50 @@ class MainActivity : AppCompatActivity() {
         return false
     }
 
+    val cameraStatusHandler = object : ManagedCameraStatus {
+        override fun cameraFPSchanged(
+            camera: ManagedCamera,
+            fps: Int
+        ) {
+            Timber.i("Cam ${camera.systemId} FPS changed: $fps")
+            if (camera.cameraState == CAMERASTATE_IDLE) {
+                Timber.w("Ignoring FPS change because Cam ${camera.systemId} is IDLE!!")
+                return
+            }
+            if (camera.systemId == camera0?.systemId) {
+                textview_cam0_description.text = getString(R.string.camera_description).format(camera.systemId, fps)
+            } else {
+                textview_cam1_description.text = getString(R.string.camera_description).format(camera.systemId, fps)
+            }
+        }
+
+        override fun cameraStateChanged(
+            camera: ManagedCamera,
+            state: Int
+        ) {
+            Timber.i("Cam ${camera.systemId}  State changed: $state")
+            if (state != CAMERASTATE_IDLE) {
+                if (camera.systemId == camera0?.systemId) {
+                    //Camera 0 is previewing
+                    button_toggle_cam_0.text = "${getString(R.string.stop)} ${camera.systemId}"
+                } else {
+                    //Camera 1 is previewing
+                    button_toggle_cam_1.text = "${getString(R.string.stop)} ${camera.systemId}"
+                }
+            } else {
+                if (camera.systemId == camera0?.systemId) {
+                    //Camera 0 is idle
+                    button_toggle_cam_0.text = "${getString(R.string.start)} ${camera.systemId}"
+                    textview_cam0_description.text = getString(R.string.camera_description_idle).format(camera.systemId)
+                } else {
+                    //Camera 1 is idle
+                    button_toggle_cam_1.text = "${getString(R.string.start)} ${camera.systemId}"
+                    textview_cam1_description.text = getString(R.string.camera_description_idle).format(camera.systemId)
+                }
+            }
+        }
+    }
+
     fun initCameras() {
         val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
         Timber.i("Available cameras: %s", Arrays.toString(manager.cameraIdList))
@@ -178,9 +208,19 @@ class MainActivity : AppCompatActivity() {
                 .create()
                 .show()
         }
-        camera0 = ManagedCamera(manager.cameraIdList[0], "Camera${manager.cameraIdList[0]}}", view_finder_0)
+        camera0 = ManagedCamera(
+            manager.cameraIdList[0],
+            "Camera${manager.cameraIdList[0]}}",
+            view_finder_0,
+            cameraStatusHandler
+        )
         if (manager.cameraIdList.size >= 2) {
-            camera1 = ManagedCamera(manager.cameraIdList[1], "Camera${manager.cameraIdList[1]}}", view_finder_1)
+            camera1 = ManagedCamera(
+                manager.cameraIdList[1],
+                "Camera${manager.cameraIdList[1]}}",
+                view_finder_1,
+                cameraStatusHandler
+            )
         }
     }
 
