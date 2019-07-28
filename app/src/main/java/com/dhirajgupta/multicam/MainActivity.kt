@@ -16,6 +16,8 @@ import android.provider.Settings
 import android.text.TextUtils
 import android.view.Surface
 import android.view.TextureView
+import android.view.View
+import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import com.dhirajgupta.multicam.service.ManagedCamera
@@ -47,9 +49,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         initCameras()
-
-//        view_finder_0.surfaceTextureListener = textureListener
-//        view_finder_1.surfaceTextureListener = textureListener1
+        camera0?.isPreviewing = true // Default to showing the first camera, it will automatically start when ready
+        button_toggle_cam_0.setOnClickListener { toggleCamera(button_toggle_cam_0, camera0) }
+        button_toggle_cam_1.setOnClickListener { toggleCamera(button_toggle_cam_1, camera1) }
+        button_save.setOnClickListener { Timber.i("Save") }
     }
 
     /**
@@ -75,6 +78,21 @@ class MainActivity : AppCompatActivity() {
         camera0?.releaseResources()
         camera1?.releaseResources()
     }
+
+    fun toggleCamera(view: Button, camera: ManagedCamera?) {
+        camera?.let {
+            it.isPreviewing = !it.isPreviewing
+            it.updatePreviewStatus()
+            if (it.isPreviewing) {
+                //Button will now stop
+                view.text = "${getString(R.string.stop)} ${camera.systemId}"
+            } else {
+                //Button will now start
+                view.text = "${getString(R.string.start)} ${camera.systemId}"
+            }
+        }
+    }
+
 
     /**
      * Handle Activity permission request responses
@@ -165,5 +183,6 @@ class MainActivity : AppCompatActivity() {
             camera1 = ManagedCamera(manager.cameraIdList[1], "Camera${manager.cameraIdList[1]}}", view_finder_1)
         }
     }
+
 
 }

@@ -39,6 +39,11 @@ class ManagedCamera(
 ) {
 
     /**
+     * A flag to match the preview playing status of the camera
+     */
+    var isPreviewing = false
+
+    /**
      * An additional thread for running tasks that shouldn't block the UI.
      */
     private var backgroundThread: HandlerThread? = null
@@ -122,7 +127,7 @@ class ManagedCamera(
         }
 
         override fun onSurfaceTextureUpdated(p0: SurfaceTexture?) {
-            Timber.i("onSurfaceTextureUpdated")
+//            Timber.i("onSurfaceTextureUpdated")
         }
 
         override fun onSurfaceTextureDestroyed(p0: SurfaceTexture?): Boolean {
@@ -264,6 +269,19 @@ class ManagedCamera(
         get() = textureView.context as Activity
 
 
+    /////////////////////////////////// Implementation ////////////////////////////////////
+
+    fun updatePreviewStatus(){
+        if (isPreviewing){
+            captureSession?.setRepeatingRequest(
+                previewRequest,
+                captureCallback, backgroundHandler
+            )
+        }
+        else{
+            captureSession?.stopRepeating()
+        }
+    }
     /**
      * Sets up member variables related to camera.
      *
@@ -450,6 +468,7 @@ class ManagedCamera(
     }
 
 
+
     /**
      * Creates a new [CameraCaptureSession] for camera preview.
      */
@@ -490,10 +509,7 @@ class ManagedCamera(
 
                             // Finally, we start displaying the camera preview.
                             previewRequest = previewRequestBuilder.build()
-                            captureSession?.setRepeatingRequest(
-                                previewRequest,
-                                captureCallback, backgroundHandler
-                            )
+                            updatePreviewStatus()
                         } catch (e: CameraAccessException) {
                             Timber.e(e)
                         }

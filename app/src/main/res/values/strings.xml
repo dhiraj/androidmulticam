@@ -6,4 +6,8 @@
     <string name="cancel">Cancel</string>
     <string name="this_device_has_no_cameras">This device has no cameras, the application cannot show any video!
     </string>
+    <string name="app_title">MolecuLight Camera Test</string>
+    <string name="save">Save</string>
+    <string name="stop">Stop</string>
+    <string name="start">Start</string>
 </resources>

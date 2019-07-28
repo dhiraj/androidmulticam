@@ -3,21 +3,103 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         xmlns:app="http://schemas.android.com/apk/res-auto"
+        tools:context=".MainActivity"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
-        tools:context=".MainActivity">
+        android:orientation="vertical"
+        android:layout_margin="8dp"
+>
+    <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+    >
+        <TextView
+                android:id="@+id/textview_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+                android:text="@string/app_title"
+        />
+        <TextView
+                android:id="@+id/textview_datetime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:text="2019-07-28 13:55:05"
 
-    <com.dhirajgupta.multicam.view.AutoFitTextureView
-            android:id="@+id/view_finder_0"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-    />
-    <com.dhirajgupta.multicam.view.AutoFitTextureView
-            android:id="@+id/view_finder_1"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-    />
+        />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+    <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+    >
+
+        <com.dhirajgupta.multicam.view.AutoFitTextureView
+                android:id="@+id/view_finder_0"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginRight="8dp"
+        />
+        <com.dhirajgupta.multicam.view.AutoFitTextureView
+                android:id="@+id/view_finder_1"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginRight="8dp"
+        />
+        <androidx.appcompat.widget.LinearLayoutCompat android:layout_width="wrap_content"
+                                                      android:layout_height="wrap_content"
+                                                      android:orientation="vertical"
+        >
+            <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/button_toggle_cam_0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:text="Stop 0"
+                    android:layout_weight="1"
+            />
+            <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/button_toggle_cam_1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:text="Stop 0"
+                    android:layout_weight="1"
+            />
+            <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/button_save"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:text="@string/save"
+                    android:layout_weight="1"
+            />
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </androidx.appcompat.widget.LinearLayoutCompat>
+    <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+    >
+        <TextView
+                android:id="@+id/textview_cam0_description"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:text="Cam 0: 30 fps"
+        />
+        <TextView
+                android:id="@+id/textview_cam1_description"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:text="Cam 1: idle"
+        />
+    </androidx.appcompat.widget.LinearLayoutCompat>
 </androidx.appcompat.widget.LinearLayoutCompat>
