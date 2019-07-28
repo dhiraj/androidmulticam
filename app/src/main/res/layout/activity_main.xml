@@ -8,13 +8,13 @@
         android:orientation="horizontal"
         tools:context=".MainActivity">
 
-    <TextureView
+    <com.dhirajgupta.multicam.view.AutoFitTextureView
             android:id="@+id/view_finder_0"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
     />
-    <TextureView
+    <com.dhirajgupta.multicam.view.AutoFitTextureView
             android:id="@+id/view_finder_1"
             android:layout_width="0dp"
             android:layout_height="match_parent"

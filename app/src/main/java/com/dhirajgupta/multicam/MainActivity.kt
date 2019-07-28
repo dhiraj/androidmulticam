@@ -1,19 +1,209 @@
 package com.dhirajgupta.multicam
 
 import android.Manifest
-import android.content.DialogInterface
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.SurfaceTexture
+import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
+import android.text.TextUtils
+import android.view.Surface
+import android.view.TextureView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import com.dhirajgupta.multicam.util.CompareSizesByArea
+import com.dhirajgupta.multicam.view.AutoFitTextureView
+import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
     ////////////////////////////////// Instance Vars //////////////////////////////////////////////
+
+    /**
+     * IVars to hold the IDs of the camera inputs to show in the viewFinders
+     */
+    var cameraId0 = ""
+    var cameraId1 = ""
+
+    lateinit var camera0: CameraDevice
+    lateinit var camera1: CameraDevice
+
+    val textureListener = object : TextureView.SurfaceTextureListener {
+        override fun onSurfaceTextureAvailable(p0: SurfaceTexture?, p1: Int, p2: Int) {
+            Timber.i("onSurfaceTextureAvailable")
+            if (!askCameraPermission()) { //Camera permission was already available
+                resumeViewFinders()
+            }
+        }
+
+        override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture?, p1: Int, p2: Int) {
+            Timber.i("onSurfaceTextureSizeChanged")
+        }
+
+        override fun onSurfaceTextureUpdated(p0: SurfaceTexture?) {
+//            Timber.i("onSurfaceTextureUpdated")
+        }
+
+        override fun onSurfaceTextureDestroyed(p0: SurfaceTexture?): Boolean {
+            Timber.i("onSurfaceTextureDestroyed")
+            return true
+        }
+    }
+
+    val captureSessionCallback = object : CameraCaptureSession.StateCallback() {
+        override fun onReady(session: CameraCaptureSession) {
+            super.onReady(session)
+            Timber.i("OnReady")
+            val previewRequestBuilder = session.device.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+            val surface = Surface(view_finder_0.surfaceTexture)
+            previewRequestBuilder.addTarget(surface)
+            val previewRequest = previewRequestBuilder.build()
+            session.setRepeatingRequest(previewRequest, null, null)
+        }
+
+        override fun onCaptureQueueEmpty(session: CameraCaptureSession) {
+            super.onCaptureQueueEmpty(session)
+            Timber.i("onCaptureQueueEmpty")
+        }
+
+        override fun onConfigureFailed(p0: CameraCaptureSession) {
+            Timber.i("onConfigureFailed")
+        }
+
+        override fun onClosed(session: CameraCaptureSession) {
+            super.onClosed(session)
+            Timber.i("onClosed")
+        }
+
+        override fun onSurfacePrepared(session: CameraCaptureSession, surface: Surface) {
+            super.onSurfacePrepared(session, surface)
+            Timber.i("onSurfacePrepared")
+        }
+
+        override fun onConfigured(p0: CameraCaptureSession) {
+            Timber.i("onConfigured")
+        }
+
+        override fun onActive(session: CameraCaptureSession) {
+            super.onActive(session)
+            Timber.i("onActive")
+        }
+    }
+
+    val camera0StateCallback = object : CameraDevice.StateCallback() {
+        override fun onOpened(camera: CameraDevice) {
+            Timber.i("Opened")
+            camera0 = camera
+            val surface = Surface(view_finder_0.surfaceTexture)
+            camera.createCaptureSession(Arrays.asList(surface),captureSessionCallback, null)
+        }
+
+        override fun onClosed(camera: CameraDevice) {
+            super.onClosed(camera)
+            Timber.i("Closed")
+        }
+
+        override fun onDisconnected(camera: CameraDevice) {
+            Timber.i("Disconnected")
+        }
+
+        override fun onError(camera: CameraDevice, errorCode: Int) {
+            Timber.i("Error: %d", errorCode)
+        }
+    }
+
+    val textureListener1 = object : TextureView.SurfaceTextureListener {
+        override fun onSurfaceTextureAvailable(p0: SurfaceTexture?, p1: Int, p2: Int) {
+            Timber.i("onSurfaceTextureAvailable")
+            if (!askCameraPermission()) { //Camera permission was already available
+                startViewFinder(cameraId1, camera1StateCallback)
+            }
+        }
+
+        override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture?, p1: Int, p2: Int) {
+            Timber.i("onSurfaceTextureSizeChanged")
+        }
+
+        override fun onSurfaceTextureUpdated(p0: SurfaceTexture?) {
+//            Timber.i("onSurfaceTextureUpdated")
+        }
+
+        override fun onSurfaceTextureDestroyed(p0: SurfaceTexture?): Boolean {
+            Timber.i("onSurfaceTextureDestroyed")
+            return true
+        }
+    }
+
+    val captureSessionCallback1 = object : CameraCaptureSession.StateCallback() {
+        override fun onReady(session: CameraCaptureSession) {
+            super.onReady(session)
+            Timber.i("OnReady")
+            val previewRequestBuilder = session.device.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+            val surface = Surface(view_finder_1.surfaceTexture)
+            previewRequestBuilder.addTarget(surface)
+            val previewRequest = previewRequestBuilder.build()
+            session.setRepeatingRequest(previewRequest, null, null)
+        }
+
+        override fun onCaptureQueueEmpty(session: CameraCaptureSession) {
+            super.onCaptureQueueEmpty(session)
+            Timber.i("onCaptureQueueEmpty")
+        }
+
+        override fun onConfigureFailed(p0: CameraCaptureSession) {
+            Timber.i("onConfigureFailed")
+        }
+
+        override fun onClosed(session: CameraCaptureSession) {
+            super.onClosed(session)
+            Timber.i("onClosed")
+        }
+
+        override fun onSurfacePrepared(session: CameraCaptureSession, surface: Surface) {
+            super.onSurfacePrepared(session, surface)
+            Timber.i("onSurfacePrepared")
+        }
+
+        override fun onConfigured(p0: CameraCaptureSession) {
+            Timber.i("onConfigured")
+        }
+
+        override fun onActive(session: CameraCaptureSession) {
+            super.onActive(session)
+            Timber.i("onActive")
+        }
+    }
+
+    val camera1StateCallback = object : CameraDevice.StateCallback() {
+        override fun onOpened(camera: CameraDevice) {
+            Timber.i("Opened")
+            camera1 = camera
+            val surface = Surface(view_finder_1.surfaceTexture)
+            camera.createCaptureSession(Arrays.asList(surface),captureSessionCallback1, null)
+        }
+
+        override fun onClosed(camera: CameraDevice) {
+            super.onClosed(camera)
+            Timber.i("Closed")
+        }
+
+        override fun onDisconnected(camera: CameraDevice) {
+            Timber.i("Disconnected")
+        }
+
+        override fun onError(camera: CameraDevice, errorCode: Int) {
+            Timber.i("Error: %d", errorCode)
+        }
+    }
+
 
     ////////////////////////////////// Activity Constants //////////////////////////////////////////
 
@@ -30,6 +220,8 @@ class MainActivity : AppCompatActivity() {
         Timber.i("onCreate")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        view_finder_0.surfaceTextureListener = textureListener
+        view_finder_1.surfaceTextureListener = textureListener1
     }
 
     /**
@@ -41,7 +233,6 @@ class MainActivity : AppCompatActivity() {
     override fun onResumeFragments() {
         super.onResumeFragments()
         Timber.i("onResumeFragments")
-        askCameraPermission()
     }
 
     /**
@@ -54,7 +245,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Handle Activity permission requests
+     * Handle Activity permission request responses
      */
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (requestCode == PERMREQ_CAMERA) {
@@ -84,11 +275,14 @@ class MainActivity : AppCompatActivity() {
                     finish() // We're still allowed to show rationale for requesting permission (which will show the next
                     // time the user launches the app), so we quit silently
                 }
+            } else {
+                //The single permission in the results *is* Granted
+                resumeViewFinders()
             }
         }
     }
 
-    //////////////////////////////////// Private ////////////////////////////////////////////////
+    //////////////////////////////////// Implementation and Utility methods ////////////////////////////////////////////////
 
 
     /**
@@ -121,6 +315,57 @@ class MainActivity : AppCompatActivity() {
             return true
         }
         return false
+    }
+
+    fun resumeViewFinders() {
+        chooseCameraInputs()
+        if (!TextUtils.isEmpty(cameraId0)) {
+            startViewFinder(cameraId0, camera0StateCallback)
+        }
+    }
+
+    fun chooseCameraInputs() {
+        val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        Timber.i("Available cameras: %s", Arrays.toString(manager.cameraIdList))
+        if (manager.cameraIdList.size < 1) {
+            AlertDialog.Builder(this@MainActivity)
+                .setMessage(getString(R.string.this_device_has_no_cameras))
+                .setNeutralButton(getString(R.string.ok)) { _, _ ->
+                    finish() //Finish the activity because there are no cameras
+                }
+                .create()
+                .show()
+        }
+        cameraId0 = manager.cameraIdList[0]
+        if (manager.cameraIdList.size >= 2) {
+            cameraId1 = manager.cameraIdList[1]
+        }
+        setupTextureView(view_finder_0,cameraId0)
+        setupTextureView(view_finder_1,cameraId1)
+    }
+
+    fun setupTextureView(textureView: AutoFitTextureView, cameraId: String){
+        val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        val characteristics = manager.getCameraCharacteristics(cameraId)
+        Timber.i("Characteristics-%s:%s", cameraId, characteristics)
+        val configMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+        if (configMap == null) {
+            Timber.e("Camera with id:%s has no Scaler Stream Configuration Map in its characteristics!", cameraId)
+            return
+        }
+        val sizes = configMap.getOutputSizes(SurfaceTexture::class.java)
+        val smallest = Collections.min(Arrays.asList(*sizes), CompareSizesByArea())
+        Timber.i("Picked smallest size:%dx%d", smallest.width, smallest.height)
+        textureView.setAspectRatio(smallest.width,smallest.height)
+    }
+
+    fun startViewFinder(cameraId: String, cameraStateCallBack: CameraDevice.StateCallback) {
+        val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        manager.openCamera(cameraId, cameraStateCallBack, null)
+    }
+
+    fun combinedPreview() {
+
     }
 
 }

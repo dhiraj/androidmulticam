@@ -4,4 +4,6 @@
     <string name="no">No</string>
     <string name="ok">Ok</string>
     <string name="cancel">Cancel</string>
+    <string name="this_device_has_no_cameras">This device has no cameras, the application cannot show any video!
+    </string>
 </resources>
