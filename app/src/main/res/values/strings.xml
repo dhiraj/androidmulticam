@@ -12,4 +12,6 @@
     <string name="start">Start</string>
     <string name="camera_description">Cam %1$s: %2$d fps</string>
     <string name="camera_description_idle">Cam %1$s: off</string>
+    <string name="browse">Browse</string>
+    <string name="camera_saved_photo">Cam %1$s saved photo to %2$s</string>
 </resources>

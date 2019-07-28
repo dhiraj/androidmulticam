@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.*
 import android.hardware.camera2.*
 import android.media.ImageReader
+import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.SystemClock
@@ -19,6 +20,7 @@ import com.dhirajgupta.multicam.interfaces.*
 import com.dhirajgupta.multicam.utils.CompareSizesByArea
 import com.dhirajgupta.multicam.views.AutoFitTextureView
 import timber.log.Timber
+import java.io.File
 import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
@@ -41,7 +43,7 @@ class ManagedCamera(
     val textureView: AutoFitTextureView,
 
     /**
-     * Listener to observe notifications from camera state and FPS changes
+     * Listener to observe notifications from camera state and FPS changeΩs
      */
     val listener: ManagedCameraStatus
 ) {
@@ -74,7 +76,7 @@ class ManagedCamera(
     /**
      * An [ImageReader] that handles still image capture.
      */
-//    private var imageReader: ImageReader? = null
+    private var imageReader: ImageReader? = null
 
 
     /**
@@ -132,6 +134,11 @@ class ManagedCamera(
             field = value
             textureView.post { listener.cameraStateChanged(this@ManagedCamera, value) }
         }
+
+    /**
+     * This is the output file for our picture.
+     */
+    private lateinit var file: File
 
 
     /////////////////////////////////////////////////// Callback Instance Variables ///////////////////////////////////
@@ -228,7 +235,7 @@ class ManagedCamera(
 
         private fun capturePicture(result: CaptureResult) {
             val afState = result.get(CaptureResult.CONTROL_AF_STATE)
-            if (afState == null) {
+            if (afState == null || afState == 0) {
                 captureStillPicture()
             } else if (afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED
                 || afState == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED
@@ -261,6 +268,16 @@ class ManagedCamera(
         }
 
     }
+
+    /**
+     * This a callback object for the [ImageReader]. "onImageAvailable" will be called when a
+     * still image is ready to be saved.
+     */
+    private val onImageAvailableListener = ImageReader.OnImageAvailableListener {
+        file = File(activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES),"${UUID.randomUUID().toString()}.jpeg")
+        backgroundHandler?.post(ImageSaver(it.acquireNextImage(), file))
+    }
+
 
     /////////////////////////////////// Computed properties /////////////////////////////
 
@@ -296,14 +313,6 @@ class ManagedCamera(
             for (cameraId in manager.cameraIdList) {
                 val characteristics = manager.getCameraCharacteristics(cameraId)
 
-                // We don't use a front facing camera in this sample.
-                val cameraDirection = characteristics.get(CameraCharacteristics.LENS_FACING)
-                if (cameraDirection != null &&
-                    cameraDirection == CameraCharacteristics.LENS_FACING_FRONT
-                ) {
-                    continue
-                }
-
                 val map = characteristics.get(
                     CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
                 ) ?: continue
@@ -313,10 +322,10 @@ class ManagedCamera(
                     Arrays.asList(*map.getOutputSizes(ImageFormat.JPEG)),
                     CompareSizesByArea()
                 )
-//                imageReader = ImageReader.newInstance(largest.width, largest.height,
-//                    ImageFormat.JPEG, /*maxImages*/ 2).apply {
-//                    setOnImageAvailableListener(onImageAvailableListener, backgroundHandler)
-//                }
+                imageReader = ImageReader.newInstance(largest.width, largest.height,
+                    ImageFormat.JPEG, /*maxImages*/ 2).apply {
+                    setOnImageAvailableListener(onImageAvailableListener, backgroundHandler)
+                }
 
                 // Find out if we need to swap dimension to get the preview size relative to sensor
                 // coordinate.
@@ -430,8 +439,8 @@ class ManagedCamera(
             captureSession = null
             cameraDevice?.close()
             cameraDevice = null
-//            imageReader?.close()
-//            imageReader = null
+            imageReader?.close()
+            imageReader = null
         } catch (e: InterruptedException) {
             throw RuntimeException("Interrupted while trying to lock camera closing.", e)
         } finally {
@@ -491,7 +500,7 @@ class ManagedCamera(
 
             // Here, we create a CameraCaptureSession for camera preview.
             cameraDevice?.createCaptureSession(
-                Arrays.asList(surface),//, imageReader?.surface),
+                Arrays.asList(surface, imageReader?.surface),
                 object : CameraCaptureSession.StateCallback() {
 
                     override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
@@ -566,7 +575,7 @@ class ManagedCamera(
     /**
      * Lock the focus as the first step for a still image capture.
      */
-    private fun lockFocus() {
+    fun lockFocus() {
         try {
             // This is how to tell the camera to lock focus.
             previewRequestBuilder.set(
@@ -613,53 +622,54 @@ class ManagedCamera(
      * [.captureCallback] from both [.lockFocus].
      */
     private fun captureStillPicture() {
-//        try {
-//            if (activity == null || cameraDevice == null) return
-//            val rotation = activity.windowManager.defaultDisplay.rotation
-//
-//            // This is the CaptureRequest.Builder that we use to take a picture.
-//            val captureBuilder = cameraDevice?.createCaptureRequest(
-//                CameraDevice.TEMPLATE_STILL_CAPTURE
-//            )?.apply {
-//                addTarget(imageReader?.surface)
-//
-//                // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
-//                // We have to take that into account and rotate JPEG properly.
-//                // For devices with orientation of 90, we return our mapping from ORIENTATIONS.
-//                // For devices with orientation of 270, we need to rotate the JPEG 180 degrees.
-//                set(
-//                    CaptureRequest.JPEG_ORIENTATION,
-//                    (ORIENTATIONS.get(rotation) + sensorOrientation + 270) % 360
-//                )
-//
-//                // Use the same AE and AF modes as the preview.
-//                set(
-//                    CaptureRequest.CONTROL_AF_MODE,
-//                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-//                )
-//            }?.also { setAutoFlash(it) }
-//
-//            val captureCallback = object : CameraCaptureSession.CaptureCallback() {
-//
-//                override fun onCaptureCompleted(
-//                    session: CameraCaptureSession,
-//                    request: CaptureRequest,
-//                    result: TotalCaptureResult
-//                ) {
+        try {
+            if (activity == null || cameraDevice == null) return
+            val rotation = activity.windowManager.defaultDisplay.rotation
+
+            // This is the CaptureRequest.Builder that we use to take a picture.
+            val captureBuilder = cameraDevice?.createCaptureRequest(
+                CameraDevice.TEMPLATE_STILL_CAPTURE
+            )?.apply {
+                imageReader?.surface?.let { addTarget(it) }
+
+                // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
+                // We have to take that into account and rotate JPEG properly.
+                // For devices with orientation of 90, we return our mapping from ORIENTATIONS.
+                // For devices with orientation of 270, we need to rotate the JPEG 180 degrees.
+                set(
+                    CaptureRequest.JPEG_ORIENTATION,
+                    (ORIENTATIONS.get(rotation) + sensorOrientation + 270) % 360
+                )
+
+                // Use the same AE and AF modes as the preview.
+                set(
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                )
+            }?.also { setAutoFlash(it) }
+
+            val captureCallback = object : CameraCaptureSession.CaptureCallback() {
+
+                override fun onCaptureCompleted(
+                    session: CameraCaptureSession,
+                    request: CaptureRequest,
+                    result: TotalCaptureResult
+                ) {
 //                    activity.showToast("Saved: $file")
-//                    Timber.i(file.toString())
-//                    unlockFocus()
-//                }
-//            }
-//
-//            captureSession?.apply {
-//                stopRepeating()
-//                abortCaptures()
-//                capture(captureBuilder?.build(), captureCallback, null)
-//            }
-//        } catch (e: CameraAccessException) {
-//            Timber.e(e)
-//        }
+                    Timber.i("Saved: ${file}")
+                    unlockFocus()
+                    textureView.post { listener.cameraSavedPhoto(this@ManagedCamera, file) }
+                }
+            }
+
+            captureSession?.apply {
+                stopRepeating()
+                abortCaptures()
+                captureBuilder?.build()?.let { capture(it, captureCallback, null) }
+            }
+        } catch (e: CameraAccessException) {
+            Timber.e(e)
+        }
 
     }
 

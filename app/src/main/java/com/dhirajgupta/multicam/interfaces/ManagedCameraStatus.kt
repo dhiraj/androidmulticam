@@ -1,6 +1,7 @@
 package com.dhirajgupta.multicam.interfaces
 
 import com.dhirajgupta.multicam.services.ManagedCamera
+import java.io.File
 
 /**
  * Camera state: Idle / Not started.
@@ -35,4 +36,5 @@ val CAMERASTATE_PICTURE_TAKEN = 4
 interface ManagedCameraStatus {
     fun cameraFPSchanged(camera: ManagedCamera, fps: Int)
     fun cameraStateChanged(camera: ManagedCamera, state: Int)
+    fun cameraSavedPhoto(camera: ManagedCamera, filePath:File)
 }

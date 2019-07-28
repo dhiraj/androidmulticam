@@ -8,6 +8,7 @@ import android.hardware.camera2.CameraManager
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
 import android.provider.Settings
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
@@ -18,6 +19,7 @@ import com.dhirajgupta.multicam.interfaces.ManagedCameraStatus
 import com.dhirajgupta.multicam.services.ManagedCamera
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
+import java.io.File
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -45,7 +47,23 @@ class MainActivity : AppCompatActivity() {
         camera0?.isPreviewing = true // Default to showing the first camera, it will automatically start when ready
         button_toggle_cam_0.setOnClickListener { toggleCamera(button_toggle_cam_0, camera0) }
         button_toggle_cam_1.setOnClickListener { toggleCamera(button_toggle_cam_1, camera1) }
-        button_save.setOnClickListener { Timber.i("Save") }
+        button_save.setOnClickListener {
+            Timber.i("Save")
+            camera0?.let {
+                if (it.cameraState == CAMERASTATE_IDLE){
+                    Timber.i("Ignoring Camera 0 because it is idle!")
+                    return@let
+                }
+                it.lockFocus()
+            }
+            camera1?.let {
+                if (it.cameraState == CAMERASTATE_IDLE){
+                    Timber.i("Ignoring Camera 0 because it is idle!")
+                    return@let
+                }
+                it.lockFocus()
+            }
+        }
     }
 
     /**
@@ -157,7 +175,7 @@ class MainActivity : AppCompatActivity() {
             camera: ManagedCamera,
             fps: Int
         ) {
-            Timber.i("Cam ${camera.systemId} FPS changed: $fps")
+//            Timber.i("Cam ${camera.systemId} FPS changed: $fps")
             if (camera.cameraState == CAMERASTATE_IDLE) {
                 Timber.w("Ignoring FPS change because Cam ${camera.systemId} is IDLE!!")
                 return
@@ -194,6 +212,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        override fun cameraSavedPhoto(camera: ManagedCamera, filePath: File) {
+            AlertDialog.Builder(this@MainActivity)
+                .setMessage(getString(R.string.camera_saved_photo).format(camera.systemId,filePath.absolutePath))
+                .create()
+                .show()
+        }
     }
 
     fun initCameras() {
@@ -223,6 +248,5 @@ class MainActivity : AppCompatActivity() {
             )
         }
     }
-
 
 }
