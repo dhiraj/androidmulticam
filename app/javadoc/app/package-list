@@ -1,0 +1,8 @@
+$dokka.format:html
+$dokka.linkExtension:html
+
+com.dhirajgupta.multicam
+com.dhirajgupta.multicam.interfaces
+com.dhirajgupta.multicam.services
+com.dhirajgupta.multicam.utils
+com.dhirajgupta.multicam.views

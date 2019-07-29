@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>com.dhirajgupta.multicam.interfaces - app</title>
+<link rel="stylesheet" href="../../style.css">
+</HEAD>
+<BODY>
+<a href="../index.html">app</a>&nbsp;/&nbsp;<a href="./index.html">com.dhirajgupta.multicam.interfaces</a><br/>
+<br/>
+<h2>Package com.dhirajgupta.multicam.interfaces</h2>
+<h3>Types</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-managed-camera-status/index.html">ManagedCameraStatus</a></p>
+</td>
+<td>
+<code><span class="keyword">interface </span><span class="identifier">ManagedCameraStatus</span></code>
+<p>Consumers of <a href="../com.dhirajgupta.multicam.services/-managed-camera/index.html">ManagedCamera</a> need to supply an implementation of this interface to allow the camera instance to
+communicate back as required</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-c-a-m-e-r-a-s-t-a-t-e_-i-d-l-e.html">CAMERASTATE_IDLE</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">CAMERASTATE_IDLE</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Camera state: Idle / Not started.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-c-a-m-e-r-a-s-t-a-t-e_-p-i-c-t-u-r-e_-t-a-k-e-n.html">CAMERASTATE_PICTURE_TAKEN</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">CAMERASTATE_PICTURE_TAKEN</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Camera state: Picture was taken.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-c-a-m-e-r-a-s-t-a-t-e_-p-r-e-v-i-e-w.html">CAMERASTATE_PREVIEW</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">CAMERASTATE_PREVIEW</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Camera state: Showing camera preview.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-c-a-m-e-r-a-s-t-a-t-e_-w-a-i-t-i-n-g_-l-o-c-k.html">CAMERASTATE_WAITING_LOCK</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">CAMERASTATE_WAITING_LOCK</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Camera state: Waiting for the focus to be locked.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-c-a-m-e-r-a-s-t-a-t-e_-w-a-i-t-i-n-g_-n-o-n_-p-r-e-c-a-p-t-u-r-e.html">CAMERASTATE_WAITING_NON_PRECAPTURE</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">CAMERASTATE_WAITING_NON_PRECAPTURE</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Camera state: Waiting for the exposure state to be something other than precapture.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-c-a-m-e-r-a-s-t-a-t-e_-w-a-i-t-i-n-g_-p-r-e-c-a-p-t-u-r-e.html">CAMERASTATE_WAITING_PRECAPTURE</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">CAMERASTATE_WAITING_PRECAPTURE</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Camera state: Waiting for the exposure to be precapture state.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

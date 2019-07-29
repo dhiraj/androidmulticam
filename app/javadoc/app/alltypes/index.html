@@ -1,0 +1,63 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>alltypes - app</title>
+<link rel="stylesheet" href="../../style.css">
+</HEAD>
+<BODY>
+<h3>All Types</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<a href="../com.dhirajgupta.multicam/-app/index.html">com.dhirajgupta.multicam.App</a></td>
+<td>
+<p>Standard Android App subclass that is useful for most Apps. By providing the shared instance of the App object,
+we are able to access the Application Context anywhere that it is useful. In this particular project we're using
+Application Context to ask <a href="https://developer.android.com/reference/android/media/MediaScannerConnection.html">MediaScannerConnection</a> to scan our newly saved images so that it appears in the user's
+Photo Gallery application.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../com.dhirajgupta.multicam.views/-auto-fit-texture-view/index.html">com.dhirajgupta.multicam.views.AutoFitTextureView</a></td>
+<td>
+<p>A <a href="https://developer.android.com/reference/android/view/TextureView.html">TextureView</a> that can be adjusted to a specified aspect ratio.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../com.dhirajgupta.multicam.utils/-compare-sizes-by-area/index.html">com.dhirajgupta.multicam.utils.CompareSizesByArea</a></td>
+<td>
+<p>Compares two <code>Size</code>s based on their areas.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../com.dhirajgupta.multicam/-main-activity/index.html">com.dhirajgupta.multicam.MainActivity</a></td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../com.dhirajgupta.multicam.services/-managed-camera/index.html">com.dhirajgupta.multicam.services.ManagedCamera</a></td>
+<td>
+<p>This class is heavily inspired from Google's Camera2Basic sample at https://github.com/googlesamples/android-Camera2Basic
+Heavy refactoring has been carried out to move all the code from the Fragment in the sample to a self contained
+<a href="../com.dhirajgupta.multicam.services/-managed-camera/index.html">ManagedCamera</a> class that can take care of it's own threads and is almost fully self sufficient.
+By modularizing the Camera in this way we are able to easily create multiple instances (two in this case) while the
+implementation code remains common between both the cameras.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../com.dhirajgupta.multicam.interfaces/-managed-camera-status/index.html">com.dhirajgupta.multicam.interfaces.ManagedCameraStatus</a></td>
+<td>
+<p>Consumers of <a href="../com.dhirajgupta.multicam.services/-managed-camera/index.html">ManagedCamera</a> need to supply an implementation of this interface to allow the camera instance to
+communicate back as required</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

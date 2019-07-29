@@ -1,0 +1,146 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>MainActivity - app</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">app</a>&nbsp;/&nbsp;<a href="../index.html">com.dhirajgupta.multicam</a>&nbsp;/&nbsp;<a href="./index.html">MainActivity</a><br/>
+<br/>
+<h1>MainActivity</h1>
+<code><span class="keyword">class </span><span class="identifier">MainActivity</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">AppCompatActivity</span></code>
+<h3>Constructors</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-init-.html">&lt;init&gt;</a></p>
+</td>
+<td>
+<code><span class="identifier">MainActivity</span><span class="symbol">(</span><span class="symbol">)</span></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="camera0.html">camera0</a></p>
+</td>
+<td>
+<code><span class="keyword">var </span><span class="identifier">camera0</span><span class="symbol">: </span><a href="../../com.dhirajgupta.multicam.services/-managed-camera/index.html"><span class="identifier">ManagedCamera</span></a><span class="symbol">?</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="camera1.html">camera1</a></p>
+</td>
+<td>
+<code><span class="keyword">var </span><span class="identifier">camera1</span><span class="symbol">: </span><a href="../../com.dhirajgupta.multicam.services/-managed-camera/index.html"><span class="identifier">ManagedCamera</span></a><span class="symbol">?</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="camera-status-handler.html">cameraStatusHandler</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">cameraStatusHandler</span><span class="symbol">: </span><a href="../../com.dhirajgupta.multicam.interfaces/-managed-camera-status/index.html"><span class="identifier">ManagedCameraStatus</span></a></code>
+<p>Implementation of Custom interface to handle communication from <a href="../../com.dhirajgupta.multicam.services/-managed-camera/index.html">ManagedCamera</a> back to <a href="./index.html">MainActivity</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-p-e-r-m-r-e-q_-c-a-m-e-r-a.html">PERMREQ_CAMERA</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">PERMREQ_CAMERA</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Request code for Camera permission request</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="all-permissions-granted.html">allPermissionsGranted</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">allPermissionsGranted</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>All the required permissions have been granted, so we can now do the sensitive operations that require these
+permissions, namely initing the cameras and also creating the storage folder that will house saved images</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="ask-all-required-permissions.html">askAllRequiredPermissions</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">askAllRequiredPermissions</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Utility function to ask for any of our required permission
+If the function did not ask for any permission, because all of them are granted already, returns false
+else it asks for the required permissions and returns true</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="init-cameras.html">initCameras</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">initCameras</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Checks available cameras and inits them. At least one camera is required, else the app will quit</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="on-create.html">onCreate</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">onCreate</span><span class="symbol">(</span><span class="identifier" id="com.dhirajgupta.multicam.MainActivity$onCreate(android.os.Bundle)/savedInstanceState">savedInstanceState</span><span class="symbol">:</span>&nbsp;<a href="https://developer.android.com/reference/android/os/Bundle.html"><span class="identifier">Bundle</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="on-pause.html">onPause</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">onPause</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>We must save the state of the app, including which cameras were operational and then,
+relinquish control on the camera(s) so that the OS can allocate them as required</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="on-request-permissions-result.html">onRequestPermissionsResult</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">onRequestPermissionsResult</span><span class="symbol">(</span><span class="identifier" id="com.dhirajgupta.multicam.MainActivity$onRequestPermissionsResult(kotlin.Int, kotlin.Array((kotlin.String)), kotlin.IntArray)/requestCode">requestCode</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><span class="identifier" id="com.dhirajgupta.multicam.MainActivity$onRequestPermissionsResult(kotlin.Int, kotlin.Array((kotlin.String)), kotlin.IntArray)/permissions">permissions</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html"><span class="identifier">Array</span></a><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><span class="identifier" id="com.dhirajgupta.multicam.MainActivity$onRequestPermissionsResult(kotlin.Int, kotlin.Array((kotlin.String)), kotlin.IntArray)/grantResults">grantResults</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int-array/index.html"><span class="identifier">IntArray</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Handle Activity permission request responses</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="on-resume-fragments.html">onResumeFragments</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">onResumeFragments</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Even though we're not using Fragments, <em>right now</em>, we will ultimately do so in the future,
+so it makes sense to override onResumeFragments instead of onResume
+We will perform on-foreground steps in this method, and open the camera(s) that were operating
+in last session, or if <a href="./index.html">MainActivity</a> was just created, then the first Camera only</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="toggle-camera.html">toggleCamera</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">toggleCamera</span><span class="symbol">(</span><span class="identifier" id="com.dhirajgupta.multicam.MainActivity$toggleCamera(com.dhirajgupta.multicam.services.ManagedCamera)/camera">camera</span><span class="symbol">:</span>&nbsp;<a href="../../com.dhirajgupta.multicam.services/-managed-camera/index.html"><span class="identifier">ManagedCamera</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Simple function that sets the <a href="../../com.dhirajgupta.multicam.services/-managed-camera/is-previewing.html">ManagedCamera.isPreviewing</a> to the opposite of whatever it is, currently, and
+then asks the camera to update it's preview status.
+As the status of the camera changes, the appropriate callbacks will be called to update <a href="./index.html">MainActivity</a> labels.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>
