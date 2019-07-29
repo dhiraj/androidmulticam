@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
      * then asks the camera to update it's preview status.
      * As the status of the camera changes, the appropriate callbacks will be called to update [MainActivity] labels.
      */
-    fun toggleCamera(view: Button, camera: ManagedCamera?) {
+    fun toggleCamera(camera: ManagedCamera?) {
         camera?.let {
             it.isPreviewing = !it.isPreviewing
             it.updatePreviewStatus()
@@ -159,6 +159,7 @@ class MainActivity : AppCompatActivity() {
         ) {
             Timber.i("Cam ${camera.systemId}  State changed: $state")
             if (state != CAMERASTATE_IDLE) {
+                button_save.isEnabled = true // Enable the Save button when either of the Camera's is active
                 if (camera.systemId == camera0?.systemId) {
                     //Camera 0 is previewing
                     button_toggle_cam_0.text = "${getString(R.string.stop)} ${camera.systemId}"
@@ -175,6 +176,9 @@ class MainActivity : AppCompatActivity() {
                     //Camera 1 is idle
                     button_toggle_cam_1.text = "${getString(R.string.start)} ${camera.systemId}"
                     textview_cam1_description.text = getString(R.string.camera_description_idle).format(camera.systemId)
+                }
+                if (camera0?.cameraState == CAMERASTATE_IDLE && camera1?.cameraState == CAMERASTATE_IDLE){
+                    button_save.isEnabled = false //Disable the Save button when both the Cameras are idle.
                 }
             }
         }
@@ -231,8 +235,8 @@ class MainActivity : AppCompatActivity() {
 
         initCameras()
         camera0?.isPreviewing = true // Default to showing the first camera, it will automatically start when ready
-        button_toggle_cam_0.setOnClickListener { toggleCamera(button_toggle_cam_0, camera0) }
-        button_toggle_cam_1.setOnClickListener { toggleCamera(button_toggle_cam_1, camera1) }
+        button_toggle_cam_0.setOnClickListener { toggleCamera(camera0) }
+        button_toggle_cam_1.setOnClickListener { toggleCamera(camera1) }
         button_save.setOnClickListener {
             Timber.i("Save button pressed")
             camera0?.let {
