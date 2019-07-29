@@ -307,19 +307,6 @@ class ManagedCamera(
 
     /////////////////////////////////// Implementation ////////////////////////////////////
 
-    fun updatePreviewStatus() {
-        if (isPreviewing) {
-            captureSession?.setRepeatingRequest(
-                previewRequest,
-                captureCallback, backgroundHandler
-            )
-            cameraState = CAMERASTATE_PREVIEW
-        } else {
-            captureSession?.stopRepeating()
-            cameraState = CAMERASTATE_IDLE
-        }
-    }
-
     /**
      * Sets up member variables related to camera.
      *
@@ -702,6 +689,25 @@ class ManagedCamera(
             openCamera(textureView.width, textureView.height)
         }
     }
+
+    /**
+     * Is called whenever the implementation should be made to match up with the state of [isPreviewing].
+     * [cameraState] is also set to IDLE or PREVIEW to match with the implementation, here.
+     */
+    fun updatePreviewStatus() {
+        if (isPreviewing) {
+            captureSession?.setRepeatingRequest(
+                previewRequest,
+                captureCallback, backgroundHandler
+            )
+            cameraState = CAMERASTATE_PREVIEW
+        } else {
+            captureSession?.stopRepeating()
+            cameraState = CAMERASTATE_IDLE
+        }
+    }
+
+
 
     /**
      * The Consumer should call this method when it wants the [ManagedCamera] to release camera resources, and shut down
