@@ -1,8 +1,8 @@
-# Project Title
+# Android MultiCam Camera2 API Demo
 
 Android MultiCam project. Demonstrates how the Camera2 API allows simultaneous Camera Preview and Image Capture from multiple cameras on one device.
 
-The codebase is a liberal refactor and inspired from Google's [Android Camera2Basic example](https://github.com/googlesamples/android-Camera2Basic). A new [ManagedCamera] class has been created to create a common code module that can be reused to create multiple instances of simultaneous cameras and this is showcased in the provided Activity.
+The codebase is a liberal refactor and inspired from Google's [Android Camera2Basic example](https://github.com/googlesamples/android-Camera2Basic). A new [ManagedCamera](https://gitlab.com/dhirajgupta/androidmulticam/blob/develop/javadoc/app/com.dhirajgupta.multicam.services/-managed-camera/index.md) class has been created to create a common code module that can be reused to create multiple instances of simultaneous cameras and this is showcased in the provided Activity.
 
 ## Getting Started
 
