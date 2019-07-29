@@ -4,6 +4,8 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
+apply plugin: 'org.jetbrains.dokka-android'
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.1"
@@ -21,6 +23,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    dokka {
+        outputFormat = 'html'
+        outputDirectory = "$buildDir/javadoc"
+    }
 }
 
 dependencies {
@@ -32,4 +38,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+    //Logging
+    implementation 'com.jakewharton.timber:timber:4.7.1'
 }

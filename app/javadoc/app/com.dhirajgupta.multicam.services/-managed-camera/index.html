@@ -1,0 +1,186 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>ManagedCamera - app</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">app</a>&nbsp;/&nbsp;<a href="../index.html">com.dhirajgupta.multicam.services</a>&nbsp;/&nbsp;<a href="./index.html">ManagedCamera</a><br/>
+<br/>
+<h1>ManagedCamera</h1>
+<code><span class="keyword">class </span><span class="identifier">ManagedCamera</span></code>
+<p>This class is heavily inspired from Google's Camera2Basic sample at https://github.com/googlesamples/android-Camera2Basic
+Heavy refactoring has been carried out to move all the code from the Fragment in the sample to a self contained
+<a href="./index.html">ManagedCamera</a> class that can take care of it's own threads and is almost fully self sufficient.
+By modularizing the Camera in this way we are able to easily create multiple instances (two in this case) while the
+implementation code remains common between both the cameras.</p>
+<h3>Constructors</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-init-.html">&lt;init&gt;</a></p>
+</td>
+<td>
+<code><span class="identifier">ManagedCamera</span><span class="symbol">(</span><span class="identifier" id="com.dhirajgupta.multicam.services.ManagedCamera$<init>(kotlin.String, kotlin.String, com.dhirajgupta.multicam.views.AutoFitTextureView, com.dhirajgupta.multicam.interfaces.ManagedCameraStatus)/systemId">systemId</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><span class="identifier" id="com.dhirajgupta.multicam.services.ManagedCamera$<init>(kotlin.String, kotlin.String, com.dhirajgupta.multicam.views.AutoFitTextureView, com.dhirajgupta.multicam.interfaces.ManagedCameraStatus)/threadName">threadName</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><span class="identifier" id="com.dhirajgupta.multicam.services.ManagedCamera$<init>(kotlin.String, kotlin.String, com.dhirajgupta.multicam.views.AutoFitTextureView, com.dhirajgupta.multicam.interfaces.ManagedCameraStatus)/textureView">textureView</span><span class="symbol">:</span>&nbsp;<a href="../../com.dhirajgupta.multicam.views/-auto-fit-texture-view/index.html"><span class="identifier">AutoFitTextureView</span></a><span class="symbol">, </span><span class="identifier" id="com.dhirajgupta.multicam.services.ManagedCamera$<init>(kotlin.String, kotlin.String, com.dhirajgupta.multicam.views.AutoFitTextureView, com.dhirajgupta.multicam.interfaces.ManagedCameraStatus)/listener">listener</span><span class="symbol">:</span>&nbsp;<a href="../../com.dhirajgupta.multicam.interfaces/-managed-camera-status/index.html"><span class="identifier">ManagedCameraStatus</span></a><span class="symbol">)</span></code>
+<p>This class is heavily inspired from Google's Camera2Basic sample at https://github.com/googlesamples/android-Camera2Basic
+Heavy refactoring has been carried out to move all the code from the Fragment in the sample to a self contained
+<a href="./index.html">ManagedCamera</a> class that can take care of it's own threads and is almost fully self sufficient.
+By modularizing the Camera in this way we are able to easily create multiple instances (two in this case) while the
+implementation code remains common between both the cameras.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="activity.html">activity</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">activity</span><span class="symbol">: </span><a href="https://developer.android.com/reference/android/app/Activity.html"><span class="identifier">Activity</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="camera-state.html">cameraState</a></p>
+</td>
+<td>
+<code><span class="keyword">var </span><span class="identifier">cameraState</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>The current state of camera state for taking pictures.
+REFACTORING NOTE: CAMERASTSATE_IDLE has been specifically added to allow consumers to know when the Camera is idle</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="is-previewing.html">isPreviewing</a></p>
+</td>
+<td>
+<code><span class="keyword">var </span><span class="identifier">isPreviewing</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>A flag to match the preview playing status of the camera. If initially set to true, then the <a href="./index.html">ManagedCamera</a>
+instance will automatically start the preview when it becomes possible</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="last-f-p-s.html">lastFPS</a></p>
+</td>
+<td>
+<code><span class="keyword">var </span><span class="identifier">lastFPS</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Capture the last FPS to allow debouncing to notify the consumer only when an FPS change is actually detected.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="last-millis.html">lastMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">var </span><span class="identifier">lastMillis</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
+<p>Capture the last milliseconds to allow fps calculation for this camera view</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="listener.html">listener</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">listener</span><span class="symbol">: </span><a href="../../com.dhirajgupta.multicam.interfaces/-managed-camera-status/index.html"><span class="identifier">ManagedCameraStatus</span></a></code>
+<p>Listener to observe notifications from camera state and FPS changeΩs</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="surface-texture-listener.html">surfaceTextureListener</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">surfaceTextureListener</span><span class="symbol">: </span><a href="https://developer.android.com/reference/android/view/TextureView/SurfaceTextureListener.html"><span class="identifier">SurfaceTextureListener</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="system-id.html">systemId</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">systemId</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
+<p>systemId holds the cameraId that maps this camera instance to the system's camera device number.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="texture-view.html">textureView</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">textureView</span><span class="symbol">: </span><a href="../../com.dhirajgupta.multicam.views/-auto-fit-texture-view/index.html"><span class="identifier">AutoFitTextureView</span></a></code>
+<p>An <a href="../../com.dhirajgupta.multicam.views/-auto-fit-texture-view/index.html">AutoFitTextureView</a> for camera preview.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="thread-name.html">threadName</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">threadName</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
+<p>Name of the thread that this camera object will use</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="lock-focus.html">lockFocus</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">lockFocus</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Lock the focus as the first step for a still image capture.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="prepare-to-preview.html">prepareToPreview</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">prepareToPreview</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>The Consumer should call this method when it wants the <a href="./index.html">ManagedCamera</a> to become ready to function
+If <a href="is-previewing.html">isPreviewing</a> is set to true before calling this function, then the camera instance will automatically
+start the Camera preview in the supplied TextureView as well</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="release-resources.html">releaseResources</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">releaseResources</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>The Consumer should call this method when it wants the <a href="./index.html">ManagedCamera</a> to release camera resources, and shut down
+any ongoing previews.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="update-preview-status.html">updatePreviewStatus</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">updatePreviewStatus</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Is called whenever the implementation should be made to match up with the state of <a href="is-previewing.html">isPreviewing</a>.
+<a href="camera-state.html">cameraState</a> is also set to IDLE or PREVIEW to match with the implementation, here.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Companion Object Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="filename-format.html">filenameFormat</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">filenameFormat</span><span class="symbol">: </span><a href="https://developer.android.com/reference/java/text/SimpleDateFormat.html"><span class="identifier">SimpleDateFormat</span></a></code></td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>
