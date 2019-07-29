@@ -33,6 +33,10 @@ val CAMERASTATE_WAITING_NON_PRECAPTURE = 3
  */
 val CAMERASTATE_PICTURE_TAKEN = 4
 
+/**
+ * Consumers of [ManagedCamera] need to supply an implementation of this interface to allow the camera instance to
+ * communicate back as required
+ */
 interface ManagedCameraStatus {
     fun cameraFPSchanged(camera: ManagedCamera, fps: Int)
     fun cameraStateChanged(camera: ManagedCamera, state: Int)

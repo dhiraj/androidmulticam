@@ -21,11 +21,19 @@ import com.dhirajgupta.multicam.utils.CompareSizesByArea
 import com.dhirajgupta.multicam.views.AutoFitTextureView
 import timber.log.Timber
 import java.io.File
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
+/**
+ * This class is heavily inspired from Google's Camera2Basic sample at https://github.com/googlesamples/android-Camera2Basic
+ * Heavy refactoring has been carried out to move all the code from the Fragment in the sample to a self contained
+ * [ManagedCamera] class that can take care of it's own threads and is almost fully self sufficient.
+ * By modularizing the Camera in this way we are able to easily create multiple instances (two in this case) while the
+ * implementation code remains common between both the cameras.
+ */
 class ManagedCamera(
     /**
      * systemId holds the cameraId that maps this camera instance to the system's camera device number.
@@ -49,7 +57,8 @@ class ManagedCamera(
 ) {
 
     /**
-     * A flag to match the preview playing status of the camera
+     * A flag to match the preview playing status of the camera. If initially set to true, then the [ManagedCamera]
+     * instance will automatically start the preview when it becomes possible
      */
     var isPreviewing = false
 
@@ -59,7 +68,7 @@ class ManagedCamera(
     var lastMillis = SystemClock.elapsedRealtime()
 
     /**
-     * Capture the last milliseconds to allow fps calculation for this camera view
+     * Capture the last FPS to allow debouncing to notify the consumer only when an FPS change is actually detected.
      */
     var lastFPS = 0
 
@@ -126,13 +135,14 @@ class ManagedCamera(
 
     /**
      * The current state of camera state for taking pictures.
+     * REFACTORING NOTE: CAMERASTSATE_IDLE has been specifically added to allow consumers to know when the Camera is idle
      *
      * @see .captureCallback
      */
     var cameraState = CAMERASTATE_IDLE
-        set(value) {
+        set(value) { //Use Custom setter to track changes
             field = value
-            textureView.post { listener.cameraStateChanged(this@ManagedCamera, value) }
+            textureView.post { listener.cameraStateChanged(this@ManagedCamera, value) } // Send on UI Thread
         }
 
     /**
@@ -155,11 +165,16 @@ class ManagedCamera(
             configureTransform(width, height)
         }
 
+        /**
+         * Every time a new frame is drawn on the [SurfaceTexture] this callback is triggered. We use this fact to
+         * calculate the FPS by calculating the diff in millis that have passed since the last frame was drawn.
+         * Calculations are done in Float and then rounded to Int for debouncing to consumer UI
+         */
         override fun onSurfaceTextureUpdated(p0: SurfaceTexture?) {
 //            Timber.i("onSurfaceTextureUpdated")
             val currentMillis = SystemClock.elapsedRealtime()
             val currentFPS = (1000.toFloat() / (currentMillis - lastMillis).toFloat()).roundToInt()
-            if (currentFPS != lastFPS){
+            if (currentFPS != lastFPS) {
                 textureView.post { listener.cameraFPSchanged(this@ManagedCamera, currentFPS) }
             }
             lastMillis = currentMillis
@@ -274,7 +289,11 @@ class ManagedCamera(
      * still image is ready to be saved.
      */
     private val onImageAvailableListener = ImageReader.OnImageAvailableListener {
-        file = File(activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES),"${UUID.randomUUID().toString()}.jpeg")
+        file = File(
+            Environment.getExternalStorageDirectory(),
+            "MultiCam/Cam${systemId}-${filenameFormat.format(Calendar.getInstance().time)}.jpeg"
+        )
+
         backgroundHandler?.post(ImageSaver(it.acquireNextImage(), file))
     }
 
@@ -322,8 +341,10 @@ class ManagedCamera(
                     Arrays.asList(*map.getOutputSizes(ImageFormat.JPEG)),
                     CompareSizesByArea()
                 )
-                imageReader = ImageReader.newInstance(largest.width, largest.height,
-                    ImageFormat.JPEG, /*maxImages*/ 2).apply {
+                imageReader = ImageReader.newInstance(
+                    largest.width, largest.height,
+                    ImageFormat.JPEG, /*maxImages*/ 2
+                ).apply {
                     setOnImageAvailableListener(onImageAvailableListener, backgroundHandler)
                 }
 
@@ -448,37 +469,6 @@ class ManagedCamera(
         }
     }
 
-
-    fun prepareToPreview() {
-        backgroundThread = HandlerThread(threadName).also { it.start() }
-        backgroundHandler = Handler(backgroundThread?.looper)
-        Timber.i("Started background thread: ${threadName}")
-
-        // When the screen is turned off and turned back on, the SurfaceTexture is already
-        // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
-        // a camera and start preview from here (otherwise, we wait until the surface is ready in
-        // the SurfaceTextureListener).
-        if (textureView.isAvailable) {
-            openCamera(textureView.width, textureView.height)
-        } else {
-            textureView.surfaceTextureListener = surfaceTextureListener
-        }
-    }
-
-    fun releaseResources() {
-        closeCamera()
-        backgroundThread?.quitSafely()
-        try {
-            backgroundThread?.join()
-            backgroundThread = null
-            backgroundHandler = null
-            Timber.i("Released background thread: ${threadName}")
-        } catch (e: InterruptedException) {
-            Timber.e(e)
-        }
-    }
-
-
     /**
      * Creates a new [CameraCaptureSession] for camera preview.
      */
@@ -572,27 +562,6 @@ class ManagedCamera(
         textureView.setTransform(matrix)
     }
 
-    /**
-     * Lock the focus as the first step for a still image capture.
-     */
-    fun lockFocus() {
-        try {
-            // This is how to tell the camera to lock focus.
-            previewRequestBuilder.set(
-                CaptureRequest.CONTROL_AF_TRIGGER,
-                CameraMetadata.CONTROL_AF_TRIGGER_START
-            )
-            // Tell #captureCallback to wait for the lock.
-            cameraState = CAMERASTATE_WAITING_LOCK
-            captureSession?.capture(
-                previewRequestBuilder.build(), captureCallback,
-                backgroundHandler
-            )
-        } catch (e: CameraAccessException) {
-            Timber.e(e)
-        }
-
-    }
 
     /**
      * Run the precapture sequence for capturing a still image. This method should be called when
@@ -712,7 +681,74 @@ class ManagedCamera(
     }
 
 
+    //////////////////////////// Public / Exposed functions ////////////////////////////////////
+
+    /**
+     * The Consumer should call this method when it wants the [ManagedCamera] to become ready to function
+     * If [isPreviewing] is set to true before calling this function, then the camera instance will automatically
+     * start the Camera preview in the supplied TextureView as well
+     */
+    fun prepareToPreview() {
+        backgroundThread = HandlerThread(threadName).also { it.start() }
+        backgroundHandler = Handler(backgroundThread?.looper)
+        Timber.i("Started background thread: ${threadName}")
+
+        // When the screen is turned off and turned back on, the SurfaceTexture is already
+        // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
+        // a camera and start preview from here (otherwise, we wait until the surface is ready in
+        // the SurfaceTextureListener).
+        textureView.surfaceTextureListener = surfaceTextureListener
+        if (textureView.isAvailable) {
+            openCamera(textureView.width, textureView.height)
+        }
+    }
+
+    /**
+     * The Consumer should call this method when it wants the [ManagedCamera] to release camera resources, and shut down
+     * any ongoing previews.
+     */
+    fun releaseResources() {
+        closeCamera()
+        backgroundThread?.quitSafely()
+        try {
+            backgroundThread?.join()
+            backgroundThread = null
+            backgroundHandler = null
+            Timber.i("Released background thread: ${threadName}")
+        } catch (e: InterruptedException) {
+            Timber.e(e)
+        }
+    }
+
+
+    /**
+     * Lock the focus as the first step for a still image capture.
+     */
+    fun lockFocus() {
+        try {
+            // This is how to tell the camera to lock focus.
+            previewRequestBuilder.set(
+                CaptureRequest.CONTROL_AF_TRIGGER,
+                CameraMetadata.CONTROL_AF_TRIGGER_START
+            )
+            // Tell #captureCallback to wait for the lock.
+            cameraState = CAMERASTATE_WAITING_LOCK
+            captureSession?.capture(
+                previewRequestBuilder.build(), captureCallback,
+                backgroundHandler
+            )
+        } catch (e: CameraAccessException) {
+            Timber.e(e)
+        }
+
+    }
+
+
     companion object {
+
+        val filenameFormat = SimpleDateFormat("yyyy-MM-dd HH.mm.ss.SSSS")
+
+
         /**
          * Conversion from screen rotation to JPEG orientation.
          */

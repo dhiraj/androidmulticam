@@ -1,13 +1,14 @@
 package com.dhirajgupta.multicam.services
 
 import android.media.Image
-import android.util.Log
+import android.media.MediaScannerConnection
+import android.net.Uri
+import com.dhirajgupta.multicam.App
 import timber.log.Timber
-
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.nio.ByteBuffer
+
 
 /**
  * Saves a JPEG [Image] into the specified [File].
@@ -44,13 +45,21 @@ internal class ImageSaver(
                     Timber.e(e)
                 }
             }
+
+            /**
+             * Ask the MediaScanner service to scan the file that we just saved on to External Storage so that it
+             * becomes available in the Device gallery
+             */
+            MediaScannerConnection.scanFile(
+                App.instance,
+                arrayOf(file.absolutePath),
+                null,
+                object : MediaScannerConnection.OnScanCompletedListener {
+                    override fun onScanCompleted(path: String?, uri: Uri?) {
+                        Timber.i("ContentScanner scanned path:$path, uri:$uri")
+                    }
+                })
         }
     }
 
-    companion object {
-        /**
-         * Tag for the [Log].
-         */
-        private val TAG = "ImageSaver"
-    }
 }
